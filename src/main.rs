@@ -2,22 +2,20 @@ use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use inquire::Confirm;
 use std::process::Stdio;
-use temp_file;
+
 fn main() {
     let mut ctx: ClipboardContext = ClipboardProvider::new().expect("could not get provider");
     // Create a temp file with clipboard contents prompting if it is non-text or undefined.
     let tempfile = temp_file::with_contents({
         if let Ok(str) = ctx.get_contents() {
             str
+        } else if Confirm::new("clipboard is undefined or non-text, do you want to writeover it?")
+            .prompt()
+            .expect("prompting failed")
+        {
+            String::from("")
         } else {
-            if Confirm::new("clipboard is undefined or non-text, do you want to writeover it?")
-                .prompt()
-                .expect("prompting failed")
-            {
-                String::from("")
-            } else {
-                std::process::exit(0)
-            }
+            std::process::exit(0)
         }
         .as_bytes()
     });
