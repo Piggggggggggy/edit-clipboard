@@ -3,6 +3,7 @@ use clipboard::ClipboardProvider;
 use inquire::Confirm;
 use std::process::Stdio;
 
+const EDITOR_COMMAND: &'static str = "hx";
 fn main() {
     let mut ctx: ClipboardContext = ClipboardProvider::new().expect("could not get provider");
     // Create a temp file with clipboard contents prompting if it is non-text or undefined.
@@ -20,7 +21,7 @@ fn main() {
         .as_bytes()
     });
     // Creates a helix process to edit the file
-    let mut helix = std::process::Command::new("hx")
+    let mut helix = std::process::Command::new(EDITOR_COMMAND)
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .env_clear()
