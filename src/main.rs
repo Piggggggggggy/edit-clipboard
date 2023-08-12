@@ -1,9 +1,9 @@
+#![windows_subsystem = "windows"]
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use inquire::Confirm;
 use std::process::Stdio;
-
-const EDITOR_COMMAND: &'static str = "hx";
+const EDITOR_COMMAND: &'static str = "nvim";
 fn main() {
     let mut ctx: ClipboardContext = ClipboardProvider::new().expect("could not get provider");
     // Create a temp file with clipboard contents prompting if it is non-text or undefined.
@@ -20,16 +20,15 @@ fn main() {
         }
         .as_bytes()
     });
-    // Creates a helix process to edit the file
-    let mut helix = std::process::Command::new(EDITOR_COMMAND)
+    // Creates a helix process to edit the file in alacritty
+    let mut helix = std::process::Command::new("alacritty")
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .env_clear()
-        .arg(tempfile.path())
+        .args(["-e", EDITOR_COMMAND, tempfile.path().to_str().unwrap()])
         .spawn()
         .unwrap();
     // Wait for helix to exit -> i.e. editing is done
-    helix.wait().expect("helix should not fail");
+    helix.wait().expect("Editor Crashed");
     // Sets clipboard contents to file
     ctx.set_contents(std::fs::read_to_string(tempfile.path()).unwrap())
         .unwrap();
