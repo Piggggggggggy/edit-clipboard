@@ -1,4 +1,5 @@
 use std::{io::Write, process::Stdio};
+use uniaxe::uniaxe;
 
 pub struct TextTransformFactory;
 impl TextTransformFactory {
@@ -8,6 +9,8 @@ impl TextTransformFactory {
             "c" => Box::new(CollapseWhitespace),
             "s" => Box::new(StripWhitespace),
             "u" => Box::new(External("uwuify")),
+            "q" => Box::new(Quote),
+            "x" => Box::new(UnicodeStrip),
             a => return Err(a),
         })
     }
@@ -51,5 +54,32 @@ impl TextTransform for External {
             .unwrap();
 
         *text = String::from_utf8_lossy(&proc.wait_with_output().unwrap().stdout).to_string()
+    }
+}
+
+pub struct Quote;
+impl TextTransform for Quote {
+    fn process(&self, text: &mut String) {
+        *text = format!("\"{}\"", text.trim());
+    }
+}
+
+pub struct UnicodeStrip;
+impl TextTransform for UnicodeStrip {
+    fn process(&self, text: &mut String) {
+        *text = text
+            .chars()
+            .map(|c| {
+                if c == '\u{2018}' || c == '\u{2019}' {
+                    '\''
+                } else if c == '\u{201C}' || c == '\u{201D}' {
+                    '\"'
+                } else {
+                    c
+                }
+            })
+            .collect();
+        let table = uniaxe::lookup::generate_table();
+        *text = uniaxe(text, &table);
     }
 }

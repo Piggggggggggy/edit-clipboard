@@ -102,6 +102,7 @@ dependencies = [
  "inquire",
  "temp-file",
  "tempfile",
+ "uniaxe",
 ]
 
 [[package]]
@@ -394,6 +395,12 @@ dependencies = [
  "quote",
  "syn",
 ]
+
+[[package]]
+name = "uniaxe"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "24f8a101506d7fc45355b244571aae4d1983e8d40ed3c85236a3f5c5414da86b"
 
 [[package]]
 name = "unicode-ident"

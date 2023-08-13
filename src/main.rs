@@ -16,6 +16,7 @@ struct EditorConfig<'a> {
     editor_process: &'a str,
 }
 fn main() {
+    const LAUNCH_TERMINAL: bool = false;
     let editor_config = EditorConfig {
         terminal_proccess: "alacritty",
         terminal_proccess_args: vec!["-e"],
@@ -54,19 +55,35 @@ fn main() {
     let tempfile = temp_file::with_contents(text.as_bytes());
 
     // Creates a process to edit the file
-    let mut editor_process = std::process::Command::new(editor_config.terminal_proccess)
-        .stdin(Stdio::inherit())
-        .stdout(Stdio::inherit())
-        .args(editor_config.terminal_proccess_args)
-        .args([
-            editor_config.editor_process,
-            tempfile.path().to_str().unwrap(),
-        ])
-        .spawn()
-        .unwrap();
+    let mut editor_process = if LAUNCH_TERMINAL {
+        std::process::Command::new(editor_config.terminal_proccess)
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .args(editor_config.terminal_proccess_args)
+            .args([
+                editor_config.editor_process,
+                tempfile.path().to_str().unwrap(),
+            ])
+            .spawn()
+            .unwrap()
+    } else {
+        std::process::Command::new(editor_config.editor_process)
+            .stdin(Stdio::inherit())
+            .stdout(Stdio::inherit())
+            .args([tempfile.path().to_str().unwrap()])
+            .spawn()
+            .unwrap()
+    };
     // Wait for helix to exit -> i.e. editing is done
     editor_process.wait().expect("Editor Crashed");
     // Sets clipboard contents to file
-    ctx.set_contents(std::fs::read_to_string(tempfile.path()).unwrap())
-        .unwrap();
+    if Confirm::new("Do you want to save to clipboard?")
+        .with_default(true)
+        .prompt_skippable()
+        .unwrap_or_else(|_| exit(0))
+        .unwrap_or(false)
+    {
+        ctx.set_contents(std::fs::read_to_string(tempfile.path()).unwrap())
+            .unwrap();
+    }
 }

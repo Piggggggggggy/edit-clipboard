@@ -9,4 +9,5 @@ A small helper program that allows editing of clipboard contents with helix.
 
 ## Todo
 
-Implement Processor Ordering
+- Implement Processor Ordering.
+  - As of now text is sent through the processor in flag order.
