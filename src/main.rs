@@ -1,17 +1,27 @@
-#![windows_subsystem = "windows"]
+// #![windows_subsystem = "windows"]
 mod preprocesser;
 
-use crate::preprocesser::Preprocesser;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use inquire::Confirm;
-use preprocesser::Processor;
+use preprocesser::processor;
+use preprocesser::transform::TextTransformFactory;
+use std::process::exit;
 use std::process::Stdio;
 
 // todo make this read in from a config file
-const EDITOR_COMMAND: &str = "nvim";
-
+struct EditorConfig<'a> {
+    terminal_proccess: &'a str,
+    terminal_proccess_args: Vec<&'a str>,
+    editor_process: &'a str,
+}
 fn main() {
+    let editor_config = EditorConfig {
+        terminal_proccess: "alacritty",
+        terminal_proccess_args: vec!["-e"],
+        editor_process: "nvim",
+    };
+
     let mut ctx: ClipboardContext = ClipboardProvider::new().expect("could not get provider");
     // Create a temp file with clipboard contents prompting if it is non-text or undefined.
     let confirm_overwrite =
@@ -27,16 +37,31 @@ fn main() {
     };
 
     // apply preprocesser(s)
-    let processor = Processor::new();
+    let mut processor = processor::Processor::new();
+    // parse arguments
+    let args = std::env::args().skip(1).collect::<String>();
+    for arg in args.chars() {
+        processor.add_op(
+            TextTransformFactory::parse(&arg.to_string()).unwrap_or_else(|e| {
+                eprintln!("flag {e} is not an option");
+                exit(1);
+            }),
+        );
+    }
     processor.apply(&mut text);
 
     // Create tempfile for editor
     let tempfile = temp_file::with_contents(text.as_bytes());
-    // Creates a helix process to edit the file
-    let mut editor_process = std::process::Command::new("alacritty")
+
+    // Creates a process to edit the file
+    let mut editor_process = std::process::Command::new(editor_config.terminal_proccess)
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
-        .args(["-e", EDITOR_COMMAND, tempfile.path().to_str().unwrap()])
+        .args(editor_config.terminal_proccess_args)
+        .args([
+            editor_config.editor_process,
+            tempfile.path().to_str().unwrap(),
+        ])
         .spawn()
         .unwrap();
     // Wait for helix to exit -> i.e. editing is done
