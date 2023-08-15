@@ -1,6 +1,8 @@
 // #![windows_subsystem = "windows"]
+mod args;
 mod preprocesser;
 
+use clap::Parser;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use inquire::Confirm;
@@ -39,11 +41,13 @@ fn main() {
 
     // apply preprocesser(s)
     let mut processor = processor::Processor::new();
+
+    let args = args::Args::parse();
+
     // parse arguments
-    let args = std::env::args().skip(1).collect::<String>();
-    for arg in args.chars() {
+    for filter_flag in args.filter.unwrap_or_default().chars() {
         processor.add_op(
-            TextTransformFactory::parse(&arg.to_string()).unwrap_or_else(|e| {
+            TextTransformFactory::parse(&filter_flag.to_string()).unwrap_or_else(|e| {
                 eprintln!("flag {e} is not an option");
                 exit(1);
             }),
