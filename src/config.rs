@@ -27,7 +27,6 @@ impl EditorConfig {
 
     pub fn new(path: path::PathBuf) -> Self {
         if let Ok(file) = fs::read_to_string(&path) {
-            println!("{}", &file);
             toml::from_str(&file).expect("Failed to parse toml")
         } else {
             eprintln!("Failed to read config file: {}", &path.display());

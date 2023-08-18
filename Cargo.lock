@@ -192,7 +192,7 @@ checksum = "304e6508efa593091e97a9abbc10f90aa7ca635b6d2784feff3c89d41dd12272"
 
 [[package]]
 name = "edit_clipboard"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "clap",
  "clipboard",
