@@ -1,0 +1,9 @@
+
+editor = "hx"
+# trim whitespace after editing is done
+trim = false
+# Omit terminal to make proccess start in same terminal
+[terminal]
+proccess = "alacritty"
+args = ["-e"] # list of arguments
+
