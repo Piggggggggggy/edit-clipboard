@@ -1,10 +1,11 @@
 use clap::Parser;
 
+use crate::preprocesser::transform::Transformation;
+
 #[derive(Parser, Debug)]
 #[command(author, version, about)]
 pub struct Args {
-    /// Use [csuqx]
-    /// This is a list of filter flags inorder
-    #[arg(short, long)]
-    pub filter: Option<String>,
+    /// List of preprocessers in order of operation
+    #[arg(value_enum)]
+    pub filter: Option<Vec<Transformation>>,
 }

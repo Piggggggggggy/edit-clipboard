@@ -41,10 +41,10 @@ fn main() {
     let args = Args::parse();
 
     // parse arguments
-    for filter_flag in args.filter.unwrap_or_default().chars() {
+    for filter_flag in args.filter.unwrap_or_default().into_iter() {
         processor.add_op(
-            TextTransformFactory::parse(&filter_flag.to_string()).unwrap_or_else(|e| {
-                eprintln!("flag {e} is not an option");
+            TextTransformFactory::parse(filter_flag).unwrap_or_else(|e| {
+                eprintln!("Error: {e}");
                 exit(1);
             }),
         );

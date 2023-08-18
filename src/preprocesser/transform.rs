@@ -1,17 +1,34 @@
+use clap::ValueEnum;
 use std::{io::Write, process::Stdio};
 use uniaxe::uniaxe;
 
+#[derive(Clone, Copy, Debug, ValueEnum)]
+pub enum Transformation {
+    /// Crunch Whitespace, alias c
+    #[value(alias("c"))]
+    CollapseWhitespace,
+    /// Strip Whitespace, alias s
+    #[value(alias("s"))]
+    StripWhitespace,
+    /// UWUIFY through an external binary, alias u
+    #[value(alias("u"))]
+    Uwuify,
+    /// Add quotes, alias q
+    #[value(alias("q"))]
+    Quote,
+    /// Unicode to Ascii, alias x
+    #[value(alias("x"))]
+    UnicodeStrip,
+}
 pub struct TextTransformFactory;
 impl TextTransformFactory {
-    pub fn parse(arg: &str) -> Result<Box<dyn TextTransform>, &str> {
-        let mut arg = arg.split_whitespace();
-        Ok(match arg.next().unwrap() {
-            "c" => Box::new(CollapseWhitespace),
-            "s" => Box::new(StripWhitespace),
-            "u" => Box::new(External("uwuify")),
-            "q" => Box::new(Quote),
-            "x" => Box::new(UnicodeStrip),
-            a => return Err(a),
+    pub fn parse(arg: Transformation) -> Result<Box<dyn TextTransform>, String> {
+        Ok(match arg {
+            Transformation::CollapseWhitespace => Box::new(CollapseWhitespace),
+            Transformation::StripWhitespace => Box::new(StripWhitespace),
+            Transformation::Uwuify => Box::new(External("uwuify")),
+            Transformation::Quote => Box::new(Quote),
+            Transformation::UnicodeStrip => Box::new(UnicodeStrip),
         })
     }
 }
