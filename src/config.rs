@@ -1,0 +1,39 @@
+use std::{fs, path};
+
+// todo make this read in from a config file
+#[derive(serde::Deserialize)]
+pub struct EditorConfig {
+    pub terminal: Option<Terminal>,
+    pub editor: String,
+    pub trim: bool,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct Terminal {
+    pub proccess: String,
+    pub args: Vec<String>,
+}
+impl EditorConfig {
+    pub fn default() -> Self {
+        let terminal = Some(Terminal {
+            proccess: "alacritty".to_string(),
+            args: vec!["-e".to_string()],
+        });
+        EditorConfig {
+            terminal,
+            editor: "hx".to_string(),
+            trim: false,
+        }
+    }
+
+    pub fn new(path: path::PathBuf) -> Self {
+        dbg!(path.display());
+        if let Ok(file) = fs::read_to_string(path) {
+            println!("{}", &file);
+            toml::from_str(&file).expect("failed to parse toml")
+        } else {
+            panic!();
+            Self::default()
+        }
+    }
+}

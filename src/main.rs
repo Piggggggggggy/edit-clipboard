@@ -1,5 +1,6 @@
 // #![windows_subsystem = "windows"]
 mod args;
+mod config;
 mod preprocesser;
 
 use clap::Parser;
@@ -11,32 +12,21 @@ use preprocesser::transform::TextTransformFactory;
 use std::process::exit;
 use std::process::Stdio;
 
-// todo make this read in from a config file
-struct EditorConfig<'a> {
-    terminal_proccess: &'a str,
-    terminal_proccess_args: Vec<&'a str>,
-    editor_process: &'a str,
-}
 fn main() {
-    const LAUNCH_TERMINAL: bool = false;
-    let editor_config = EditorConfig {
-        terminal_proccess: "alacritty",
-        terminal_proccess_args: vec!["-e"],
-        editor_process: "nvim",
-    };
+    let editor_config = config::EditorConfig::new(
+        simple_home_dir::expand_tilde("~/.config/edit_clipboard.toml").unwrap(),
+    );
 
     let mut ctx: ClipboardContext = ClipboardProvider::new().expect("could not get provider");
     // Create a temp file with clipboard contents prompting if it is non-text or undefined.
     let confirm_overwrite =
         Confirm::new("clipboard is undefined or non-text, do you want to overwrite it?");
-    let mut text = {
-        if let Ok(clipboard_contents) = ctx.get_contents() {
-            clipboard_contents
-        } else if confirm_overwrite.prompt().unwrap() {
-            String::from("")
-        } else {
-            std::process::exit(0)
-        }
+    let mut text = if let Ok(clipboard_contents) = ctx.get_contents() {
+        clipboard_contents
+    } else if confirm_overwrite.prompt().unwrap() {
+        String::from("")
+    } else {
+        std::process::exit(0)
     };
 
     // apply preprocesser(s)
@@ -58,27 +48,30 @@ fn main() {
     // Create tempfile for editor
     let tempfile = temp_file::with_contents(text.as_bytes());
 
+    let launch_terminal: bool = editor_config.terminal.is_some();
+
     // Creates a process to edit the file
-    let mut editor_process = if LAUNCH_TERMINAL {
-        std::process::Command::new(editor_config.terminal_proccess)
+    let mut editor_process = if launch_terminal {
+        let terminal = editor_config.terminal.unwrap();
+        std::process::Command::new(terminal.proccess)
             .stdin(Stdio::inherit())
             .stdout(Stdio::inherit())
-            .args(editor_config.terminal_proccess_args)
+            .args(terminal.args)
             .args([
-                editor_config.editor_process,
-                tempfile.path().to_str().unwrap(),
+                editor_config.editor,
+                tempfile.path().to_str().unwrap().to_string(),
             ])
             .spawn()
             .unwrap()
     } else {
-        std::process::Command::new(editor_config.editor_process)
+        std::process::Command::new(editor_config.editor)
             .stdin(Stdio::inherit())
             .stdout(Stdio::inherit())
             .args([tempfile.path().to_str().unwrap()])
             .spawn()
             .unwrap()
     };
-    // Wait for helix to exit -> i.e. editing is done
+    // Wait for editor to exit -> i.e. editing is done
     editor_process.wait().expect("Editor Crashed");
     // Sets clipboard contents to file
     if Confirm::new("Do you want to save to clipboard?")
@@ -87,7 +80,13 @@ fn main() {
         .unwrap_or_else(|_| exit(0))
         .unwrap_or(false)
     {
-        ctx.set_contents(std::fs::read_to_string(tempfile.path()).unwrap())
-            .unwrap();
+        let mut clip = std::fs::read_to_string(tempfile.path()).unwrap();
+
+        if editor_config.trim {
+            clip = clip.trim().to_string();
+        }
+
+        ctx.set_contents(clip)
+            .expect("could not set clipboard contents");
     }
 }
