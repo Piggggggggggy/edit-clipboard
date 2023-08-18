@@ -4,7 +4,7 @@ A small helper program that allows editing of clipboard contents with helix.
 
 A string of "flags" can be used to invoke preprocessor(s). This can be found in `src/preprocessor/transform.rs`. Some options can be changed at the top of the `main.rs` file.
 
-Config file is located at `~/.config/edit_clipboard.toml`
+Config file is located at `~/.config/edit_clipboard.toml`, this can be configured using an environment variable "EDIT_CLIPBOARD_CONFIG".
 
 ## Requires
 

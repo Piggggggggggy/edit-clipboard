@@ -3,25 +3,31 @@ mod args;
 mod config;
 mod preprocesser;
 
+use args::Args;
 use clap::Parser;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
 use inquire::Confirm;
-use preprocesser::processor;
+use preprocesser::processor::Processor;
 use preprocesser::transform::TextTransformFactory;
 use std::process::exit;
 use std::process::Stdio;
 
 fn main() {
-    let editor_config = config::EditorConfig::new(
-        simple_home_dir::expand_tilde("~/.config/edit_clipboard.toml").unwrap(),
-    );
+    let editor_config =
+        config::EditorConfig::new(if let Ok(path) = std::env::var("EDIT_CLIPBOARD_CONFIG") {
+            path.into()
+        } else {
+            simple_home_dir::expand_tilde("~/.config/edit_clipboard.toml").unwrap()
+        });
 
-    let mut ctx: ClipboardContext = ClipboardProvider::new().expect("could not get provider");
+    let mut clipboard: ClipboardContext =
+        ClipboardProvider::new().expect("could not get clipboard provider");
     // Create a temp file with clipboard contents prompting if it is non-text or undefined.
     let confirm_overwrite =
         Confirm::new("clipboard is undefined or non-text, do you want to overwrite it?");
-    let mut text = if let Ok(clipboard_contents) = ctx.get_contents() {
+
+    let mut text = if let Ok(clipboard_contents) = clipboard.get_contents() {
         clipboard_contents
     } else if confirm_overwrite.prompt().unwrap() {
         String::from("")
@@ -30,9 +36,9 @@ fn main() {
     };
 
     // apply preprocesser(s)
-    let mut processor = processor::Processor::new();
+    let mut processor = Processor::new();
 
-    let args = args::Args::parse();
+    let args = Args::parse();
 
     // parse arguments
     for filter_flag in args.filter.unwrap_or_default().chars() {
@@ -86,7 +92,8 @@ fn main() {
             clip = clip.trim().to_string();
         }
 
-        ctx.set_contents(clip)
+        clipboard
+            .set_contents(clip)
             .expect("could not set clipboard contents");
     }
 }

@@ -1,6 +1,5 @@
 use std::{fs, path};
 
-// todo make this read in from a config file
 #[derive(serde::Deserialize)]
 pub struct EditorConfig {
     pub terminal: Option<Terminal>,
@@ -27,12 +26,11 @@ impl EditorConfig {
     }
 
     pub fn new(path: path::PathBuf) -> Self {
-        dbg!(path.display());
-        if let Ok(file) = fs::read_to_string(path) {
+        if let Ok(file) = fs::read_to_string(&path) {
             println!("{}", &file);
-            toml::from_str(&file).expect("failed to parse toml")
+            toml::from_str(&file).expect("Failed to parse toml")
         } else {
-            panic!();
+            eprintln!("Failed to read config file: {}", &path.display());
             Self::default()
         }
     }
