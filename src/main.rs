@@ -10,35 +10,44 @@ use clipboard::ClipboardProvider;
 use inquire::Confirm;
 use preprocesser::processor::Processor;
 use preprocesser::transform::TextTransformFactory;
+use std::io;
+use std::io::Read;
 use std::process::exit;
 use std::process::Stdio;
 
 fn main() {
-    let editor_config =
-        config::EditorConfig::new(if let Ok(path) = std::env::var("EDIT_CLIPBOARD_CONFIG") {
-            path.into()
-        } else {
-            simple_home_dir::expand_tilde("~/.config/edit_clipboard.toml").unwrap()
-        });
+    // parse args
+    let args = Args::parse();
+
+    let config_path = if let Ok(path) = std::env::var("EDIT_CLIPBOARD_CONFIG") {
+        path.into()
+    } else {
+        simple_home_dir::expand_tilde("~/.config/edit_clipboard.toml").unwrap()
+    };
+
+    if args.config {
+        println!("{}", config_path.display());
+        exit(0);
+    }
+
+    let editor_config = config::EditorConfig::new(config_path);
 
     let mut clipboard: ClipboardContext =
         ClipboardProvider::new().expect("could not get clipboard provider");
-    // Create a temp file with clipboard contents prompting if it is non-text or undefined.
-    let confirm_overwrite =
-        Confirm::new("clipboard is undefined or non-text, do you want to overwrite it?");
 
-    let mut text = if let Ok(clipboard_contents) = clipboard.get_contents() {
-        clipboard_contents
-    } else if confirm_overwrite.prompt().unwrap() {
-        String::from("")
+    // get clipboard contents using a new string if it fails or using stdin if provided
+    let mut buffer = String::new();
+    let mut stdin = io::stdin();
+    stdin.read_to_string(&mut buffer).unwrap();
+
+    let mut text = if !buffer.is_empty() {
+        buffer
     } else {
-        std::process::exit(0)
+        clipboard.get_contents().unwrap_or_default()
     };
 
     // apply preprocesser(s)
     let mut processor = Processor::new();
-
-    let args = Args::parse();
 
     // parse arguments
     for filter_flag in args.filter.unwrap_or_default().into_iter() {
