@@ -8,4 +8,8 @@ pub struct Args {
     /// List of preprocessers in order of operation
     #[arg(value_enum)]
     pub filter: Option<Vec<Transformation>>,
+
+    /// print config path
+    #[arg(short, long)]
+    pub config: bool,
 }
