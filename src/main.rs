@@ -38,8 +38,10 @@ fn main() {
 
     // get clipboard contents using a new string if it fails or using stdin if provided
     let mut buffer = String::new();
-    let mut stdin = io::stdin();
-    stdin.read_to_string(&mut buffer).unwrap();
+    if !atty::is(Stream::Stdin) {
+        let mut stdin = io::stdin();
+        stdin.read_to_string(&mut buffer).unwrap();
+    }
 
     let mut text = if !buffer.is_empty() {
         buffer
