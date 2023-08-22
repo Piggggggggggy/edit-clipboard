@@ -4,6 +4,7 @@ mod config;
 mod preprocesser;
 
 use args::Args;
+use atty::Stream;
 use clap::Parser;
 use clipboard::ClipboardContext;
 use clipboard::ClipboardProvider;
@@ -89,20 +90,25 @@ fn main() {
     // Wait for editor to exit -> i.e. editing is done
     editor_process.wait().expect("Editor Crashed");
     // Sets clipboard contents to file
-    if Confirm::new("Do you want to save to clipboard?")
-        .with_default(true)
-        .prompt_skippable()
-        .unwrap_or_else(|_| exit(0))
-        .unwrap_or(false)
-    {
-        let mut clip = std::fs::read_to_string(tempfile.path()).unwrap();
 
-        if editor_config.trim {
-            clip = clip.trim().to_string();
+    let mut clip = std::fs::read_to_string(tempfile.path()).unwrap();
+
+    if editor_config.trim {
+        clip = clip.trim().to_string();
+    }
+    if atty::is(Stream::Stdout) {
+        if Confirm::new("Do you want to save to clipboard?")
+            .with_default(true)
+            .prompt_skippable()
+            .unwrap_or_else(|_| exit(0))
+            .unwrap_or(false)
+        {
+            clipboard
+                .set_contents(clip)
+                .expect("could not set clipboard contents");
         }
-
-        clipboard
-            .set_contents(clip)
-            .expect("could not set clipboard contents");
+    } else {
+        // if stdout is piped
+        println!("{clip}");
     }
 }
