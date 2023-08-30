@@ -1,6 +1,7 @@
 use clap::ValueEnum;
 use std::{io::Write, process::Stdio};
 use uniaxe::uniaxe;
+use uwuifier;
 
 #[derive(Clone, Copy, Debug, ValueEnum)]
 pub enum Transformation {
@@ -10,7 +11,7 @@ pub enum Transformation {
     /// Strip Whitespace, alias s
     #[value(alias("s"))]
     StripWhitespace,
-    /// UWUIFY through an external binary, alias u
+    /// UWUIFY some text, alias u
     #[value(alias("u"))]
     Uwuify,
     /// Add quotes, alias q
@@ -26,7 +27,7 @@ impl TextTransformFactory {
         Ok(match arg {
             Transformation::CollapseWhitespace => Box::new(CollapseWhitespace),
             Transformation::StripWhitespace => Box::new(StripWhitespace),
-            Transformation::Uwuify => Box::new(External("uwuify")),
+            Transformation::Uwuify => Box::new(Uwuify),
             Transformation::Quote => Box::new(Quote),
             Transformation::UnicodeStrip => Box::new(UnicodeStrip),
         })
@@ -98,5 +99,12 @@ impl TextTransform for UnicodeStrip {
             .collect();
         let table = uniaxe::lookup::generate_table();
         *text = uniaxe(text, &table);
+    }
+}
+
+pub struct Uwuify;
+impl TextTransform for Uwuify {
+    fn process(&self, text: &mut String) {
+        *text = uwuifier::uwuify_str_sse(text);
     }
 }
