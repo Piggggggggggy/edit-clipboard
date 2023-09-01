@@ -12,6 +12,7 @@ clipboard = "0.5.0"
 inquire = "0.5.3"
 serde = {version = "1.0.183", features = ["derive"]}
 simple-home-dir = {version = "0.1.4", features = ["expand_tilde"]}
+symspell = "0.4.3"
 temp-file = "0.1.7"
 tempfile = "3.4.0"
 toml = "0.7.6"

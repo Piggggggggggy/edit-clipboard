@@ -1,6 +1,5 @@
 use super::transform::TextTransform;
 pub struct Processor(Vec<Box<dyn TextTransform>>);
-// define module basetrait
 impl Processor {
     pub fn new() -> Self {
         Processor(Vec::new())

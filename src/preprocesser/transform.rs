@@ -1,5 +1,6 @@
 use clap::ValueEnum;
 use std::{io::Write, process::Stdio};
+use symspell::{self, SymSpell, UnicodeiStringStrategy};
 use uniaxe::uniaxe;
 use uwuifier;
 
@@ -20,6 +21,9 @@ pub enum Transformation {
     /// Unicode to Ascii, alias x
     #[value(alias("x"))]
     UnicodeStrip,
+    /// Spellcheck, transforms sentence to best guess, alias a
+    #[value(alias("e"))]
+    SpellCheck,
 }
 pub struct TextTransformFactory;
 impl TextTransformFactory {
@@ -30,6 +34,7 @@ impl TextTransformFactory {
             Transformation::Uwuify => Box::new(Uwuify),
             Transformation::Quote => Box::new(Quote),
             Transformation::UnicodeStrip => Box::new(UnicodeStrip),
+            Transformation::SpellCheck => Box::new(SpellCheck),
         })
     }
 }
@@ -106,5 +111,27 @@ pub struct Uwuify;
 impl TextTransform for Uwuify {
     fn process(&self, text: &mut String) {
         *text = uwuifier::uwuify_str_sse(text);
+    }
+}
+
+pub struct SpellCheck;
+impl TextTransform for SpellCheck {
+    fn process(&self, text: &mut String) {
+        let mut symspell: SymSpell<UnicodeiStringStrategy> = SymSpell::default();
+        const DICTIONARY: &str = include_str!(
+            r"C:\Users\piggy\Documents\Projects\rust\edit_clipboard\data\frequency_dictionary_en_82_765.txt"
+        );
+        const BIGRAM: &str = include_str!(
+            r"C:\Users\piggy\Documents\Projects\rust\edit_clipboard\data\frequency_bigramdictionary_en_243_342.txt"
+        );
+        for line in DICTIONARY.lines() {
+            symspell.load_dictionary_line(line, 0, 1, " ");
+        }
+        for line in BIGRAM.lines() {
+            symspell.load_bigram_dictionary_line(line, 0, 2, " ");
+        }
+
+        let sugestions = symspell.lookup_compound(text, 2);
+        *text = sugestions.first().map(|f| &f.term).unwrap_or(text).clone();
     }
 }
