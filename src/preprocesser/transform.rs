@@ -21,7 +21,7 @@ pub enum Transformation {
     /// Unicode to Ascii, alias x
     #[value(alias("x"))]
     UnicodeStrip,
-    /// Spellcheck, transforms sentence to best guess, alias a
+    /// Spellcheck, transforms sentence to best guess, alias e
     #[value(alias("e"))]
     SpellCheck,
 }
