@@ -118,12 +118,8 @@ pub struct SpellCheck;
 impl TextTransform for SpellCheck {
     fn process(&self, text: &mut String) {
         let mut symspell: SymSpell<UnicodeiStringStrategy> = SymSpell::default();
-        const DICTIONARY: &str = include_str!(
-            r"C:\Users\piggy\Documents\Projects\rust\edit_clipboard\data\frequency_dictionary_en_82_765.txt"
-        );
-        const BIGRAM: &str = include_str!(
-            r"C:\Users\piggy\Documents\Projects\rust\edit_clipboard\data\frequency_bigramdictionary_en_243_342.txt"
-        );
+        const DICTIONARY: &str = include_str!(r"../../data/frequency_dictionary_en_82_765.txt");
+        const BIGRAM: &str = include_str!(r"../../data/frequency_bigramdictionary_en_243_342.txt");
         for line in DICTIONARY.lines() {
             symspell.load_dictionary_line(line, 0, 1, " ");
         }
