@@ -1,6 +1,6 @@
 use clap::ValueEnum;
+use fast_symspell::{self, SymSpell, UnicodeStringStrategy};
 use std::{io::Write, process::Stdio};
-use symspell::{self, AsciiStringStrategy, SymSpell, UnicodeiStringStrategy};
 use uniaxe::uniaxe;
 use uwuifier;
 
@@ -117,19 +117,16 @@ impl TextTransform for Uwuify {
 pub struct SpellCheck;
 impl TextTransform for SpellCheck {
     fn process(&self, text: &mut String) {
-        let mut symspell: SymSpell<AsciiStringStrategy> = SymSpell::default();
+        let mut symspell: SymSpell<UnicodeStringStrategy> = SymSpell::default();
         const DICTIONARY: &str = include_str!(
             r"C:\Users\piggy\Documents\Projects\rust\edit_clipboard\data\frequency_dictionary_en_82_765.txt"
         );
         const BIGRAM: &str = include_str!(
             r"C:\Users\piggy\Documents\Projects\rust\edit_clipboard\data\frequency_bigramdictionary_en_243_342.txt"
         );
-        for line in DICTIONARY.lines() {
-            symspell.load_dictionary_line(line, 0, 1, " ");
-        }
-        for line in BIGRAM.lines() {
-            symspell.load_bigram_dictionary_line(line, 0, 2, " ");
-        }
+
+        symspell.load_dictionary(DICTIONARY, 0, 1, " ");
+        symspell.load_bigram_dictionary(BIGRAM, 0, 2, " ");
 
         let sugestions = symspell.lookup_compound(text, 2);
         *text = sugestions.first().map(|f| &f.term).unwrap_or(text).clone();
